@@ -1,101 +1,214 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import styles from './page.module.css';
+
+async function generaConseguenza(scelta: string): Promise<string> {
+  const response = await fetch('/api/openai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: scelta, type: 'conseguenza' }),
+  });
+  const data = await response.json();
+  return data.result;
+}
+
+async function generaNarrazione(scelte: string[], conseguenze: string[]): Promise<string> {
+  const response = await fetch('/api/openai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: { scelte, conseguenze }, type: 'narrazione' }),
+  });
+  const data = await response.json();
+  return data.result;
+}
+
+interface Realta {
+  id: string;
+  titolo: string;
+  descrizione: string;
+  parentId: string | null;
+  figli: string[];
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [problema, setProblema] = useState('');
+  const [sceltaIniziale1, setSceltaIniziale1] = useState('');
+  const [sceltaIniziale2, setSceltaIniziale2] = useState('');
+  const [fase, setFase] = useState<'input' | 'sceltaIniziale' | 'esplorazione'>('input');
+  const [realta, setRealta] = useState<Record<string, Realta>>({});
+  const [realtaAttuale, setRealtaAttuale] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [sceltaScartata, setSceltaScartata] = useState('');
+  const [percorso, setPercorso] = useState<string[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFase('sceltaIniziale');
+  };
+
+  const handleSceltaIniziale = (scelta: string) => {
+    const sceltaScartataTemp = scelta === sceltaIniziale1 ? sceltaIniziale2 : sceltaIniziale1;
+    setSceltaScartata(sceltaScartataTemp);
+
+    const nuovaRealta: Realta = {
+      id: '0',
+      titolo: `Realtà dopo la scelta: ${scelta}`,
+      descrizione: '',
+      parentId: null,
+      figli: []
+    };
+    setRealta({ '0': nuovaRealta });
+    setRealtaAttuale('0');
+    setFase('esplorazione');
+  };
+
+  const BollaScelta = ({ titolo, onClick }: { titolo: string; onClick: () => void }) => (
+    <div className={styles.bolla} onClick={onClick}>
+      <h3>{titolo}</h3>
     </div>
+  );
+
+  async function generaRealtaAlternative(realtaId: string): Promise<Realta[]> {
+    try {
+      const realtaAttuale = realta[realtaId];
+      const response = await fetch('/api/openai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'realtaAlternative',
+          prompt: {
+            problema,
+            sceltaScartata,
+            titoloRealtaAttuale: realtaAttuale.titolo,
+            numero: 3
+          }
+        }),
+      });
+      const data = await response.json();
+      
+      if (!data.result || !Array.isArray(data.result)) {
+        throw new Error('Risultato API non valido');
+      }
+      
+      return data.result.map((titolo: string, index: number) => ({
+        id: `${realtaId}-${index}`,
+        titolo,
+        descrizione: '',
+        parentId: realtaId,
+        figli: []
+      }));
+    } catch (error) {
+      console.error('Errore nella chiamata API:', error);
+      throw error;
+    }
+  }
+
+  const generaNuoveSubRealta = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const nuoveRealta = await generaRealtaAlternative(id);
+      setRealta(prev => {
+        const nuovoStato = { ...prev };
+        nuoveRealta.forEach(r => {
+          nuovoStato[r.id] = r;
+        });
+        nuovoStato[id] = {
+          ...nuovoStato[id],
+          figli: nuoveRealta.map(r => r.id)
+        };
+        return nuovoStato;
+      });
+    } catch (error) {
+      console.error('Errore nella generazione di nuove sub-realtà:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const BollaRealta = ({ realta, onGeneraSubRealta, onSalta, realtaGlobali }: {
+    realta: Realta;
+    onGeneraSubRealta: (id: string) => void;
+    onSalta: (id: string) => void;
+    realtaGlobali: Record<string, Realta>;
+  }) => (
+    <div className={styles.nodoRealta}>
+      <div className={`${styles.bolla} ${realta.figli.length > 0 ? styles.esplorata : ''}`}>
+        <h3>{realta.titolo}</h3>
+        {realta.figli.length === 0 && (
+          <button onClick={() => onGeneraSubRealta(realta.id)} disabled={isLoading}>
+            Genera realtà parallele
+          </button>
+        )}
+      </div>
+      {realta.figli.length > 0 && (
+        <div className={styles.subRealta}>
+          {realta.figli.map(figlioId => (
+            <div key={figlioId} className={styles.bolla} onClick={() => onSalta(figlioId)}>
+              <h4>{realtaGlobali[figlioId].titolo}</h4>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const saltaInRealta = (id: string) => {
+    setRealtaAttuale(id);
+  };
+
+  return (
+    <main className={styles.main}>
+      {fase === 'input' && (
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <textarea
+            value={problema}
+            onChange={(e) => setProblema(e.target.value)}
+            placeholder="Inserisci il problema"
+            className={styles.textarea}
+          />
+          <input
+            type="text"
+            value={sceltaIniziale1}
+            onChange={(e) => setSceltaIniziale1(e.target.value)}
+            placeholder="Scelta 1"
+            className={styles.input}
+          />
+          <input
+            type="text"
+            value={sceltaIniziale2}
+            onChange={(e) => setSceltaIniziale2(e.target.value)}
+            placeholder="Scelta 2"
+            className={styles.input}
+          />
+          <button type="submit" className={styles.button}>Avanti</button>
+        </form>
+      )}
+      {fase === 'sceltaIniziale' && (
+        <div className={styles.multiversoContainer}>
+          <h2>Scegli una delle opzioni:</h2>
+          <div className={styles.sceltaIniziale}>
+            <BollaScelta 
+              titolo={sceltaIniziale1} 
+              onClick={() => handleSceltaIniziale(sceltaIniziale1)} 
+            />
+            <BollaScelta 
+              titolo={sceltaIniziale2} 
+              onClick={() => handleSceltaIniziale(sceltaIniziale2)} 
+            />
+          </div>
+        </div>
+      )}
+      {fase === 'esplorazione' && realtaAttuale && (
+        <div className={styles.multiversoContainer}>
+          <BollaRealta
+            realta={realta[realtaAttuale]}
+            onGeneraSubRealta={generaNuoveSubRealta}
+            onSalta={saltaInRealta}
+            realtaGlobali={realta}
+          />
+        </div>
+      )}
+    </main>
   );
 }

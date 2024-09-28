@@ -1,0 +1,331 @@
+.main {
+  min-height: 100vh;
+  background: linear-gradient(to right, #000000, #434343);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 500px;
+}
+
+.textarea, .input, .button {
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.textarea {
+  height: 100px;
+}
+
+.button {
+  cursor: pointer;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.multiversoContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 2rem;
+}
+
+.nodo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.nodo.nelPercorso > .bolla {
+    border: 2px solid #4CAF50;
+}
+
+.nodoRealta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nodoRealta:first-child::before {
+    display: none;
+}
+
+.nodoRealta::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    height: 20px;
+    width: 2px;
+    background: silver;
+}
+
+.bolla {
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    padding: 1rem;
+    width: 150px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s
+}
+
+.bolla:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+}
+
+.bolla h3 {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.bolla h3, .bolla h4 {
+    margin-bottom: 1rem;
+}
+
+.bolla button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+.bolla button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.realta {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.5s ease, transform 1.5s ease;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.bolla.esplorata {
+    background: rgba(255,255,255,0.3);
+  }
+  
+.bolla.attuale {
+    background: rgba(255,255,255,0.3);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.subRealta {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    gap: 2rem;
+}
+
+.sceltaIniziale {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.sceltaIniziale h2 {
+    margin-bottom: 1rem;
+}
+
+.alberoRealta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    overflow-x: auto;
+    padding: 2rem;
+}
+  
+.subRealta .bolla {
+    width: 150px;
+    height: 150px;
+}
+
+.realtaAttuale {
+  transform: scale(1.1) translateZ(50px);
+  box-shadow: 0 0 20px rgba(255,255,255,0.5);
+  cursor: default;
+}
+
+.realtaEspansa {
+  width: 300px;
+  height: 300px;
+  z-index: 10;
+}
+
+.descrizione {
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.scelte, .conseguenze {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sceltaButton, .saltaButton {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  padding: 0.5rem;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sceltaButton:hover, .saltaButton:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.05);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.realta {
+  animation: float 5s ease-in-out infinite;
+  animation-delay: calc(var(--animation-order) * 0.1s);
+}
+
+.realtaAttuale, .realtaEspansa {
+  animation: none;
+}
+
+.portalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  overflow: hidden;
+}
+
+.portalOverlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.portal {
+  width: 100px;
+  height: 100px;
+  background: conic-gradient(from 0deg, #ff00ff, #00ffff, #ff00ff);
+  border-radius: 50%;
+  animation: portalSpin 2s linear infinite, portalExpand 1.5s ease-in-out forwards;
+}
+
+@keyframes portalSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes portalExpand {
+  0% { transform: scale(0); }
+  50% { transform: scale(20); }
+  100% { transform: scale(50); }
+}
+
+.realta.jumping {
+  transform: scale(0) rotate(720deg);
+  opacity: 0;
+}
+
+.stars {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  background: white;
+  box-shadow: 0 0 10px 1px white;
+}
+
+.flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+
+.flash.active {
+  opacity: 1;
+}
+
+@keyframes starsFly {
+  0% { transform: scale(0) translateZ(0); }
+  100% { transform: scale(20) translateZ(500px); }
+}
+
+.narrazione {
+  font-size: 0.8rem;
+  text-align: justify;
+  margin-top: 1rem;
+  max-height: 100px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 5px;
+}
+
+.sceltaButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
